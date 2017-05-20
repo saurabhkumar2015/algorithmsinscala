@@ -40,8 +40,6 @@ object MeasureCpuTime {
   def main(args: Array[String]) = {
 
     val l = List(12, 12, 34, 66, 777, 12, 12, -1215, -12, 56, -5656, 8888, -444, -3,-5)
-    val l1 = l ++l ++ l ++ l ++ l ++ l ++ l ++ l
-
     val a = new MeasureCpuTime
     (1 to 100).foreach(k => {
       println(s":::Comparison $k :::")
