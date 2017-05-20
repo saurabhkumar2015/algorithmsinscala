@@ -1,5 +1,0 @@
-package benchmark
-
-class benchmark {
-
-}
