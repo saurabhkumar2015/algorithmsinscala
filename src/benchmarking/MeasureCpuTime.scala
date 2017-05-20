@@ -29,39 +29,56 @@ class MeasureCpuTime {
 object MeasureCpuTime {
 
   def profileWithSleep[T](metricName: String)(fn: => T): T = {
-    val i = getThreadMXBean.getCurrentThreadCpuTime
+    val i = getCpuTimeInMicros
     val a = nanoTime
     val r = fn
-    sleep(10)
+    sleep(140)
     val b = nanoTime - a
-    val j = getThreadMXBean.getCurrentThreadCpuTime - i
-    println(s"profile for $metricName is ${j/1000} microseconds" )
+    val j = getCpuTimeInMicros - i
+    println(s"profile for $metricName is $j microseconds" )
     println(s"time for $metricName is ${b/1000} microseconds" )
     r
   }
 
   def profileWithWait[T](metricName: String)(fn: => T)(implicit executionContext: ExecutionContext): T = {
-    val future = Future {Thread.sleep(40)}
-    val i = getThreadMXBean.getCurrentThreadCpuTime
+    val future = Future {Thread.sleep(140)}
+    val i = getCpuTimeInMicros
     val a = nanoTime
-    Await.result(future, Duration(50,TimeUnit.MILLISECONDS))
+    Await.result(future, Duration(200,TimeUnit.MILLISECONDS))
     val r = fn
     val b = nanoTime - a
-    val j = getThreadMXBean.getCurrentThreadCpuTime - i
-    println(s"profile for $metricName is ${j/1000} microseconds" )
+    val j = getCpuTimeInMicros - i
+    println(s"profile for $metricName is $j microseconds" )
     println(s"time for $metricName is ${b/1000} microseconds" )
     r
   }
 
+  def getCpuTimeInMicros = getThreadMXBean.getCurrentThreadCpuTime/1000
+
   def main(args: Array[String]) = {
 
     val l = List(12, 12, 34, 66, 777, 12, 12, -1215, -12, 56, -5656, 8888, -444, -3,-5)
+    testSleep(l)
+    testWait(l)
+  }
+
+  def testWait(l: List[Int]): Unit = {
     val a = new MeasureCpuTime
+    (1 to 10).foreach(k => {
+      println(s":::Comparison $k :::")
+      val i = getCpuTimeInMicros
+      profileWithWait(s"time.$k.sum")(a.sum(l))
+      if (getCpuTimeInMicros - i > 140000) throw new Exception("Test case Failure")
+    })
+  }
 
-    (1 to 100).foreach(k => { println(s":::Comparison $k :::")
-      profileWithSleep(s"time.$k.sum")(a.sum(l))})
-
-    (1 to 100).foreach(k => { println(s":::Comparison $k :::")
-      profileWithWait(s"time.$k.sum")(a.sum(l))})
+  def testSleep(l: List[Int]): Unit = {
+    val a = new MeasureCpuTime
+    (1 to 10).foreach(k => {
+      println(s":::Comparison $k :::")
+      val i = getCpuTimeInMicros
+      profileWithSleep(s"time.$k.sum")(a.sum(l))
+      if (getCpuTimeInMicros - i > 140000) throw new Exception("Test case Failure")
+    })
   }
 }
